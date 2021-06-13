@@ -27,8 +27,7 @@ def main() -> None:
                 Listb = list(map(int, Listb))
                 Lista.sort()
                 Listb.sort()
-
-                if Lista != Listb:
+                if Lista != Listb or not Lista or not Listb:
                     warn(f"output does not match")
                     print(Lista)
                     print(Listb)
