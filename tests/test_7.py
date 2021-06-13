@@ -29,7 +29,7 @@ def main() -> None:
                 Lista = [x for x in outs.decode('utf-8').replace('\\n', '\n').split('\n') if x!='']
                 Lista = list(map(int, Lista))
                 if not Lista or len(Lista) != 339:
-                    warn(f"Server did not executed correctly")
+                    warn(f"Server has not executed correctly")
                     sys.exit(2)
 
                 info("OK")

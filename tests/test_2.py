@@ -5,6 +5,9 @@ import sys
 from testsupport import info, run_project_executable, warn, run, subprocess, find_project_executable
 
 
+def empty_lists(list_a, list_b) -> bool:
+    return all(v == 0 for v in list_a) or all(v == 0 for v in list_b)
+
 def main() -> None:
     # Replace with the executable you want to test
     with open("client_output_test_2.txt", "w+") as stdout:
@@ -28,7 +31,7 @@ def main() -> None:
                 Lista.sort()
                 Listb.sort()
 
-                if Lista != Listb:
+                if empty_lists(Lista, Listb) or Lista != Listb:
                     warn(f"output does not match")
                     print(Lista)
                     print(Listb)
