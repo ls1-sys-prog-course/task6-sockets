@@ -1,3 +1,17 @@
+# test output
+/tests/client_output_test_*.txt
+
+# client output
+/client
+/server
+/server_test
+/client_test
+/message_formatting_tests
+
+# protobuf output
+*.pb.cc
+*.pb.h
+
 # Prerequisites
 *.d
 
