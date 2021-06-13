@@ -22,7 +22,7 @@ You can produce the c++ files using
 
 
 ## Task 6.1
-Iamplement the ``construct_message`` and ``get_payload_size`` functions at ``util.h``.
+Implement the ``construct_message`` and ``get_payload_size`` functions at ``util.h``.
 
 TCP communication does not distinguish between different messages; ``recv`` system call might return a stream of bytes that refer to more than one distinct applications messages.
 To process the individual messages, applications should implement their own message's formatting or serialization protocol. 
@@ -74,10 +74,11 @@ The server should be available to
 accept connections at any time and should not terminate (long running process). 
 Once a connection is accepted, the server process should assign this connection to one of the server threads.
 You could find the elected thread's id by dividing the number of connections with the number of the server threads (``nb_connections % nb_threads``). 
-If a server thread receives a termination message, it should reply back to the client with the number of
-received bytes in this connection.
+If a server thread receives a termination message, it should reply back to the client the current global counter value.
 
 
-## Important notes
+## Notes
 ``printf()``-based functions are not thread-safe and in the presence of many clients you might print the correct counter values in the same line. In that case, the tests in the grading system might fail.
 We encourage you to wrap the print-functions with a global mutex to ensure that a message is flushed to standard output in a specific order.
+
+[Protocol Buffer Basics: C++](https://developers.google.com/protocol-buffers/docs/cpptutorial)
