@@ -81,4 +81,4 @@ If a server thread receives a termination message, it should reply back to the c
 ``printf()``-based functions are not thread-safe and in the presence of many clients you might print the correct counter values in the same line. In that case, the tests in the grading system might fail.
 We encourage you to wrap the print-functions with a global mutex to ensure that a message is flushed to standard output in a specific order.
 
-[Protocol Buffer Basics: C++](https://developers.google.com/protocol-buffers/docs/cpptutorial)
+Please find a reference for protobufs. [Protocol Buffer Basics: C++](https://developers.google.com/protocol-buffers/docs/cpptutorial). Note that in the messages layout, there are both optional and required fields. For completing the exercise you only have to fill the required field. You are free to use the optional fields and/or extend the message layout for familiarizing with protobufs and testing your application.
