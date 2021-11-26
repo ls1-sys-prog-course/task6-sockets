@@ -1,84 +1,97 @@
 # Task 6 - Sockets
 
-Your task is to implement a client/server application over TCP/IP using sockets API (e.g. STREAM_SOCK).
-Particularly, the server process spawns a fixed number of threads which is given as an argument. 
-Each server thread should be able to handle and process more than one connections (multiplexing I/O). 
-Further, the server should be able to continuously accept new client connections (if any). 
-The listening address should be also passed as an argument. Note that for testing your application locally and also pass the tests you can use the  ``localhost`` and some port.
-For example, you can execute ``./server <nb_server_threads> localhost 1025``.
+This week, your task is to implement a client/server application over TCP/IP using sockets API (e.g. STREAM_SOCK). 
 
+First you will implement a client which will send requests to the server. Then you will implement the server to process these requests.
 
-You also have to implement the client, which sends requests to the server.
-The requests can be of type: ADD, SUB, and TERMINATION which manipulate (ADD/SUB) a global counter the server manages or notify the server about the client's termination (TERMINATION) respectively.
-The server process stores a global counter and atomically updates it based on the received requests.
-Along with ADD/SUB requests, the request also contains a number that will
-be added/sub from the global counter respectively.
-Lastly, the TERMINATION request, instructs the server to sent back to the client a message that contains the value of the global counter.
-In particular, for each termination request the server prints the value of the global counter, it send over
-the network. Similarly, each client thread prints the value the server has sent to it. 
-As a serialization protocol, you are encouraged to use ``google::protobufs``. Note that the ``.proto`` files that describe the message layout are already provided for you. 
-You can produce the c++ files using
-``protoc --cpp_out=. <filename>.proto`` (this is also included in the Makefile). However, you can design and implement any message layout/parser you would like.
+- The requests can be of type: `ADD`, `SUB`, and `TERMINATION`.
+  - `ADD`/`SUB` manipulate a global counter the server manages.
+  - `TERMINATION` notifies the server about a clients termination.
+- The server process stores a global counter and atomically updates it based on the received requests. 
+- Along with `ADD`/`SUB` requests, the request also contains a number that will be added/sub from the global counter respectively. 
+- The `TERMINATION` request instructs the server to sent back to the client a message that contains the value of the global counter via a `COUNTER` message. 
+  - In particular, for each `TERMINATION` request the server prints the value of the global counter **and** sends it over the network via a `COUNTER` message.
+  - Similarly, each client thread prints the value the server has sent to it via the `COUNTER` response. 
+- As a serialization protocol, you are encouraged to use `google::protobufs`. 
+  - Note that the `.proto` files that describe the message layout are already provided for you. 
 
+In short, `ADD`/`SUB`/`TERMINATION` are from client to server, while `COUNTER` is from server to client.
+
+The following things are to be delivered:
+
+## Task 6.0
+
+Design a network protocol to implement the requirements above. Note that we encourage you to use Google protobufs (see `message.proto` for a skeleton). You can add additional members to this message. You can also design your own protocol if you want.
 
 ## Task 6.1
-Implement the ``construct_message`` and ``get_payload_size`` functions at ``util.h``.
 
-TCP communication does not distinguish between different messages; ``recv`` system call might return a stream of bytes that refer to more than one distinct applications messages.
-To process the individual messages, applications should implement their own message's formatting or serialization protocol. 
+A library `libutils.so` implementing the interface given in `utils.h`. Please look at the documentation given there.
 
-A common approach is to encapsulate the payload size as follows: ``<--size--><--payload-->``, where payload is a serialized protobuf (byte-stream).
+### Hints:
 
-For the functions implementation please see comments in ``util.h``.
+For `recv_msg` and `send_msg` you will have to make sure that you receive or send a whole message. However, TCP communication does not distinguish between different messages. `recv` system call might return a stream of bytes that refers to more than one distinct application message. To process the individual messages, applications should implement their own message's formatting or serialization protocol.
 
+A common approach is to encapsulate the payload size as follows: `<--size--><--payload-->`, where payload is a serialized protobuf (byte-stream). The size should be a fixed size integer (i.e. `uint32_t`) The receiving side can then always read one 4 byte integer, decode the size and read the specified bytes afterwards.
 
+Note that it's possible that `send` and `recv` do not send or receive the number of bytes passed as arguments. You may have to call them in a loop to make sure that the whole message has been sent or received.
 
 ## Task 6.2
 
-Implement the ``secure_send`` and ``secure_recv`` functions. 
+Implement the client. It should be callable via: `./client <num_threads> <hostname> <port> <num_messages> <add> <sub>`.
 
-The ``secure_send`` is a wrapper on top of ``send`` syscall that ensures that all requested bytes are written to the socket.
-The ``secure_recv`` is a wrapper on top of ``recv`` syscall that returns a single whole message.
+- The client process spawns a number of threads given as `<num_threads>` each of which independently connects to the server.
+- The client process takes as an argument the address (`<hostname>` and `<port>`) of the server. 
+  Note that in the tests `<hostname>` = `"localhost"`
+- After establishing the connection with the server, **each thread** should send a variable number of messages (taken as `<num_messages>`).
+  - **Important**: The client should alternative between `ADD` and `SUB` requests, starting with `ADD` until it has sent `<num_messages>`
+  - **Important**: The client should use the passed `<add>` and `<sub>` command line parameters as arguments for these requests
+- Once all messages are sent, each client-thread should send a `TERMINATION` message to the server. 
+- Right after the delivery of the termination message the thread should receive from the server the value of the global counter and should print the received value to stdout
+- Once all the client threads have finished, the client process terminates.
 
-Note that ``send`` and ``recv`` syscalls, similarly to ``write``/``read``,  do not quarantee that the entire packet will be written/read. You should repeatedly call them, to ensure that all data are written/read to the socket.
-Hint: You should implement those functions assuming non-blocking sockets.
+### Hints:
 
+Suppose the client is called like
+
+`./client 1 localhost 1025 4 2 1`
+
+it should send
+
+    ADD 2
+    SUB 1
+    ADD 2
+    SUB 1
+
+and print the counter received from the server to stdout.
+
+Reuse the functionality you have implemented for `libutils.so`!
 
 ## Task 6.3
-### 6.3.1
-Implement the ``get_operation`` and ``process_request`` and ``send_termination_message`` functions.
-The ``get_operation`` function generates requests for the client application. For your own testing you could generate a requests' distribution of your preference.
-However, for passing the tests, the ``get_operation`` should have a specific requests distribution. In ``util_msg.cc``, we provide a skeleton and instructions on how to implement it.
 
+Implement the server. It should be callable via: `./server <num_threads> <port`.
 
-The ``process_request`` is invoked from the server process and should deserialize and execute the received request(s). In case the server receives a termination message, it should also sent as a reply the current value of the global counter value.
-Lastly, the ``send_termination_message`` is executed by the client process. It constructs, serializes and sents to the server the termination message. Further it waits for the servers reply. For testing purposes, you could extend the messages layout (.proto files) for exchanging more information but for the grading system, this is not required.
+- The server process initially spawns a fixed number of threads (taken as `<num_threads>`, e.g. 2, 4, 8). 
+- Then it should accept connections on a port passed as `<port>` and listen on `localhost`
+- Each server thread should be able to handle multiple connections at the same time, i.e. it should be **non-blocking** (see Hints).
+- The server should be available to accept connections at any time and should not terminate (long running process). 
+- Once a connection is accepted, the server process should assign this connection to one of the server threads. You could find the elected thread's id by dividing the number of connections with the number of the server threads (`nb_connections % nb_threads`).
+- If a server thread receives a termination message, it should reply back to the client the current global counter value via a `COUNTER` message **and** print the counter to stdout
 
+### Hints
 
-### 6.3.2
-Implement the ``client`` function at ``client.cc``. 
+Reuse the functionality you have implemented for `libutils.so`!
 
-The client process spawns a number of threads each of which
-connects to the server process to a given address. 
-The client process takes as an argument the address (hostname and port) of the listening server address. If client and server run in the same machine you could use ``localhost``.
-After establishing the connection with the server, each thread should send a variable number of messages (taken as an argument).
-Once all messages are received, each client-thread should send a termination message to the server. Right after the delivery of the termination message
-the thread should receive from the server the value of the global counter and should print the received value. Once all the client threads have joined, the client process terminates.
-
-
-### 6.3.3
-Implement the `server` function at `server.cc`.
-
-The server process initially spawns a fixed number of threads (taken as an argument, e.g. 2, 4, 8). Then it should accept connections on a port passed as an argument. We use ``localhost`` as the specified IP.
-The server should be available to 
-accept connections at any time and should not terminate (long running process). 
-Once a connection is accepted, the server process should assign this connection to one of the server threads.
-You could find the elected thread's id by dividing the number of connections with the number of the server threads (``nb_connections % nb_threads``). 
-If a server thread receives a termination message, it should reply back to the client the current global counter value.
-
+You might want to use either `select()`, `poll()` or `epoll()` to implement the server threads.
 
 ## Notes
-``printf()``-based functions are not thread-safe and in the presence of many clients you might print the correct counter values in the same line. In that case, the tests in the grading system might fail.
-We encourage you to wrap the print-functions with a global mutex to ensure that a message is flushed to standard output in a specific order.
 
-Please find a reference for protobufs. [Protocol Buffer Basics: C++](https://developers.google.com/protocol-buffers/docs/cpptutorial). Note that in the messages layout, there are both optional and required fields. For completing the exercise you only have to fill the required field. You are free to use the optional fields and/or extend the message layout for familiarizing with protobufs and testing your application.
+`printf()`-based functions are not thread-safe and in the presence of many clients you might print the correct counter values in the same line. In that case, the tests in the grading system might fail.
+We encourage you to wrap the print-functions with a global mutex to ensure that a message is flushed to standard output in a specific order. Also you should flush the stream after writing to stdout using `fflush()`.
+
+You might want to set `SO_REUSEADDR` on your sockets to allow easier testing.
+
+## References
+
+- [Protocol Buffer Basics: C++](https://developers.google.com/protocol-buffers/docs/cpptutorial)
+- [select()](https://man7.org/linux/man-pages/man2/select.2.html)
+- [epoll()](https://man7.org/linux/man-pages/man7/epoll.7.html)

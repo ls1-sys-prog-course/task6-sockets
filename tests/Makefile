@@ -1,47 +1,19 @@
 CXX = g++
-COMPILE_FLAGS = -O3 -std=c++17 -Wall -g
+CXXFLAGS = -O2 -std=c++17 -Wall -g
+LDFLAGS = -lprotobuf -lpthread
 
-.PHONY : all build check clean
-all : build check
+.PHONY: all
 
-check: clean client_test server_test message_formatting_tests run
-build: clean client_test server_test message_formatting_tests
+all: test_client_testserver
 
-LINKING_FLAGS = -lpthread  #-fsanitize=address
-PROTO_FILES = client_message.pb.cc server_message.pb.cc
-SRC_FILES = util_msg.cc
-EXTRA_LFLAGS = $(LINKING_FLAGS) -lprotobuf
-CXXFLAGS ?= -I../
-
-proto_files:
-	protoc --cpp_out=. client_message.proto
-	protoc --cpp_out=. server_message.proto
-
-message_formatting_tests:
-	$(CXX) $(COMPILE_FLAGS) $(CXXFLAGS) $@.cc -o $@ ${LINKING_FLAGS}
-	mv message_formatting_tests ../
-
-client_test: 
-	$(CXX) $(COMPILE_FLAGS) $(CXXFLAGS) $@.cc -o $@ ${LINKING_FLAGS}
-	mv client_test ../
-
-server_test:
-	$(CXX) $(COMPILE_FLAGS) $(CXXFLAGS) $@.cc -o $@ ${LINKING_FLAGS}
-	mv server_test ../
-
-server:
-	$(CXX) $(COMPILE_FLAGS) $(CXXFLAGS) $@.cc ${PROTO_FILES} ${SRC_FILES} -o $@ ${EXTRA_LFLAGS}
-	mv server ../
-
-client:
-	$(CXX) $(COMPILE_FLAGS) $(CXXFLAGS) $@.cc ${PROTO_FILES} ${SRC_FILES} -o $@ ${EXTRA_LFLAGS}
-	mv client ../
-
+test_client_testserver: test_client_testserver.cpp
+	$(CXX) $(CXXFLAGS) -I.. -o $@ $< -L.. -lutils $(LDFLAGS) 
 
 clean:
-	rm -f ../message_formatting_tests ../server_test ../client_test *.txt *.txt *.txt
-	#rm -f client_message.pb.h client_message.pb.cc server_message.pb.h server_message.pb.cc
+	-rm -f test_client_testserver
 
-
-run:
-	sh ./run.sh
+check: all
+	python3 ./test_client_singlethreaded.py
+	python3 ./test_client_multithreaded.py
+	python3 ./test_server_singlethreaded.py
+	python3 ./test_server_multithreaded.py

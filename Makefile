@@ -3,53 +3,30 @@
 CC ?= cc
 CFLAGS ?= -g -Wall -O2
 CXX ?= c++
-CXXFLAGS ?= -g -Wall -O2
+CXXFLAGS ?= -g -Wall -O0
 CARGO ?= cargo
 RUSTFLAGS ?= -g
+LDFLAGS = -lprotobuf -lpthread
 
-LINKING_FLAGS = -lpthread  #-fsanitize=address
-PROTO_FILES = client_message.pb.cc server_message.pb.cc
-SRC_FILES = util_msg.cc
-EXTRA_LFLAGS = $(LINKING_FLAGS) -lprotobuf
+.PHONY: all clean
 
-.PHONY = check clean all
-
-all: build
-# this target should build all executables for all tests
-# C example:
-#all:
-#	$(CC) $(CFLAGS) -o task-name task-name.c
-
-# C++ example:
-#all:
-#	$(CXX) $(CXXFLAGS) -o task-name task-name.cpp
-
-# Rust example:
-#all:
-#	$(CARGO) build --release
-
-# Usually there is no need to modify this
-build: proto_files server client
-	$(MAKE) -C tests build
-
-
-
-proto_files:
-	protoc --cpp_out=. client_message.proto
-	protoc --cpp_out=. server_message.proto
-
-
-server:
-	$(CXX) $(COMPILE_FLAGS) $@.cc ${PROTO_FILES} ${SRC_FILES} -o $@ ${EXTRA_LFLAGS}
-
-client:
-	$(CXX) $(COMPILE_FLAGS) $@.cc ${PROTO_FILES} ${SRC_FILES} -o $@ ${EXTRA_LFLAGS}
-
-check: proto_files
-	$(MAKE) -C tests check
+all: libutils.so server client
 
 clean:
-	$(MAKE) -C tests clean
-	-rm -f server client
-	-rm -f *.txt
-	-rm -f ${PROTO_FILES} client_message.pb.h server_message.pb.h
+	-rm -f server client libutils.so message.pb.*
+
+libutils.so: utils.cpp message.pb.cc
+	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ utils.cpp message.pb.cc $(LDFLAGS)
+
+server: server_nb.cpp utils.cpp message.pb.cc
+	$(CXX) $(CXXFLAGS) -o $@ server_nb.cpp utils.cpp message.pb.cc $(LDFLAGS)
+
+client: client.cpp utils.cpp message.pb.cc
+	$(CXX) $(CXXFLAGS) -o $@ client.cpp utils.cpp message.pb.cc $(LDFLAGS)
+
+message.pb.cc: message.proto
+	protoc --cpp_out=. $^
+
+# Usually there is no need to modify this
+check: all
+	$(MAKE) -C tests check

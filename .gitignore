@@ -1,12 +1,12 @@
-# test output
-/tests/client_output_test_*.txt
+# Tests
+/tests/test_client_testserver
 
-# client output
+# Binaries
 /client
 /server
-/server_test
-/client_test
-/message_formatting_tests
+
+# Misc
+/.vscode
 
 # protobuf output
 *.pb.cc
