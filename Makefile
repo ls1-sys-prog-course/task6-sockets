@@ -10,19 +10,21 @@ LDFLAGS = -lprotobuf -lpthread
 
 .PHONY: all clean
 
-all: libutils.so server client
+all:
+	echo "Set build command here"
+	exit 1
 
 clean:
 	-rm -f server client libutils.so message.pb.*
 
-libutils.so: utils.cpp message.pb.cc
-	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ utils.cpp message.pb.cc $(LDFLAGS)
+# libutils.so: utils.cpp message.pb.cc
+# 	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ utils.cpp message.pb.cc $(LDFLAGS)
 
-server: server_nb.cpp utils.cpp message.pb.cc
-	$(CXX) $(CXXFLAGS) -o $@ server_nb.cpp utils.cpp message.pb.cc $(LDFLAGS)
+# server: server_nb.cpp utils.cpp message.pb.cc
+# 	$(CXX) $(CXXFLAGS) -o $@ server_nb.cpp utils.cpp message.pb.cc $(LDFLAGS)
 
-client: client.cpp utils.cpp message.pb.cc
-	$(CXX) $(CXXFLAGS) -o $@ client.cpp utils.cpp message.pb.cc $(LDFLAGS)
+# client: client.cpp utils.cpp message.pb.cc
+# 	$(CXX) $(CXXFLAGS) -o $@ client.cpp utils.cpp message.pb.cc $(LDFLAGS)
 
 message.pb.cc: message.proto
 	protoc --cpp_out=. $^
