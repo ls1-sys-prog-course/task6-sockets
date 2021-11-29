@@ -10,6 +10,7 @@ from testsupport import (
     warn,
     find_project_executable,
     test_root,
+    project_root,
     run,
     ensure_library,
 )
@@ -19,6 +20,8 @@ def run_client(num_threads: int, port: int, num_messages: int, add: int, sub: in
     info(
         f"Running client with {num_threads} threads and {num_messages} messages per thread."
     )
+
+    extra_env = {"LD_LIBRARY_PATH": project_root()}
 
     with tempfile.TemporaryFile(mode="w+") as stdout:
         run_project_executable(
@@ -31,6 +34,7 @@ def run_client(num_threads: int, port: int, num_messages: int, add: int, sub: in
                 str(add),
                 str(sub),
             ],
+            extra_env=extra_env,
             stdout=stdout,
         )
 
@@ -52,6 +56,7 @@ def test_server(
 ) -> None:
     try:
         server = find_project_executable("server")
+        extra_env = {"LD_LIBRARY_PATH": project_root()}
 
         sub = random.randint(1, 49)
         add = random.randint(50, 99)
@@ -60,7 +65,10 @@ def test_server(
         info(f"Run server with {num_server_threads} threads...")
 
         with subprocess.Popen(
-            [server, str(num_server_threads), "1025"], stdout=subprocess.PIPE, text=True
+            [server, str(num_server_threads), "1025"],
+            stdout=subprocess.PIPE,
+            text=True,
+            env=extra_env,
         ) as proc:
             client_numbers = []
 
