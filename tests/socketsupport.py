@@ -3,6 +3,7 @@ import sys
 import random
 import subprocess
 import os
+import time
 
 from testsupport import (
     run_project_executable,
@@ -41,7 +42,6 @@ def run_client(num_threads: int, port: int, num_messages: int, add: int, sub: in
         stdout.seek(0)
         lines = stdout.read().splitlines()
         numbers = [int(x) for x in lines]
-
         if len(numbers) != num_threads:
             warn(f"Expected {num_threads} results from client, got {len(numbers)}")
             sys.exit(1)
@@ -70,6 +70,9 @@ def test_server(
             text=True,
             env=extra_env,
         ) as proc:
+            # Wait for server init
+            time.sleep(1.0)
+
             client_numbers = []
 
             for _ in range(num_client_instances):
@@ -81,9 +84,10 @@ def test_server(
 
             proc.terminate()
             stdout, _ = proc.communicate()
-            server_numbers = parse_server_numbers(stdout)
-
-            if client_numbers != server_numbers:
+            unsorted_server_numbers = [int(x) for x in stdout.splitlines()]
+            sorted_server_numbers = sorted(unsorted_server_numbers)
+            
+            if client_numbers != sorted_server_numbers:
                 warn(f"Client and server responded differently")
                 sys.exit(1)
 
@@ -93,8 +97,10 @@ def test_server(
                 * (num_messages // 2)
                 * (add - sub)
             )
-            if server_numbers[-1] != expected:
-                warn(f"Expected {expected} as last number, got {server_numbers[-1]}")
+            if unsorted_server_numbers[-1] != expected:
+                warn(
+                    f"Expected {expected} as last number, got {unsorted_server_numbers[-1]}"
+                )
                 sys.exit(1)
 
             info("OK")
@@ -123,19 +129,25 @@ def test_client(num_threads: int) -> None:
         with subprocess.Popen(
             [test_server, "1025"], stdout=subprocess.PIPE, env=extra_env, text=True
         ) as proc:
+            # Wait for server init
+            time.sleep(1.0)
+
             client_numbers = run_client(num_threads, 1025, num_messages, add, sub)
 
             proc.terminate()
             stdout, _ = proc.communicate()
-            server_numbers = parse_server_numbers(stdout)
+            unsorted_server_numbers = [int(x) for x in stdout.splitlines()]
+            sorted_server_numbers = sorted(unsorted_server_numbers)
 
-            if client_numbers != server_numbers:
+            if client_numbers != sorted_server_numbers:
                 warn(f"Client and server responded differently")
                 sys.exit(1)
 
             expected = num_threads * (num_messages // 2) * (add - sub)
-            if server_numbers[-1] != expected:
-                warn(f"Expected {expected} as last number, got {server_numbers[-1]}")
+            if unsorted_server_numbers[-1] != expected:
+                warn(
+                    f"Expected {expected} as last number, got {unsorted_server_numbers[-1]}"
+                )
                 sys.exit(1)
 
             info("OK")
@@ -143,8 +155,3 @@ def test_client(num_threads: int) -> None:
     except OSError as e:
         warn(f"Failed to run command: {e}")
         sys.exit(1)
-
-
-def parse_server_numbers(numbers: str):
-    numbers = [int(x) for x in numbers.splitlines()]
-    return sorted(numbers)
