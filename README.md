@@ -43,7 +43,7 @@ Implement the client. It should be callable via: `./client <num_threads> <hostna
 - The client process takes as an argument the address (`<hostname>` and `<port>`) of the server. 
   Note that in the tests `<hostname>` = `"localhost"`
 - After establishing the connection with the server, **each thread** should send a variable number of messages (taken as `<num_messages>`).
-  - **Important**: The client should alternative between `ADD` and `SUB` requests, starting with `ADD` until it has sent `<num_messages>`
+  - **Important**: The client should alternate between `ADD` and `SUB` requests, starting with `ADD` until it has sent `<num_messages>`
   - **Important**: The client should use the passed `<add>` and `<sub>` command line parameters as arguments for these requests
 - Once all messages are sent, each client-thread should send a `TERMINATION` message to the server. 
 - Right after the delivery of the termination message the thread should receive from the server the value of the global counter and should print the received value to stdout
