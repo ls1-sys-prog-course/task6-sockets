@@ -21,6 +21,12 @@ extern "C" {
 int listening_socket(int port);
 
 /**
+ * @brief Open a socket to the specified hostname and port
+ * @return sockfd if successful, -1 on failure
+ */
+int connect_socket(const char *hostname, const int port);
+
+/**
  * @brief Accept a connection on the specified sockfd.
  * @return sockfd of new connection when successful, -1 on failure
  */
