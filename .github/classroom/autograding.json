@@ -1,0 +1,54 @@
+{
+  "tests": [
+    {
+      "name": "Build",
+      "setup": "",
+      "run": "timeout -s KILL 2m make all",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 0
+    },
+    {
+      "name": "Test single threaded client",
+      "setup": "",
+      "run": "timeout -s KILL 2m python3 tests/test_client_singlethreaded.py",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 10
+    },
+    {
+      "name": "Test multi threaded client",
+      "setup": "",
+      "run": "timeout -s KILL 2m python3 tests/test_client_multithreaded.py",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 5
+    },
+    {
+      "name": "Test single threaded server",
+      "setup": "",
+      "run": "timeout -s KILL 2m python3 tests/test_server_singlethreaded.py",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 15
+    },
+    {
+      "name": "Test multi threaded server",
+      "setup": "",
+      "run": "timeout -s KILL 2m python3 tests/test_server_multithreaded.py",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 10
+    }
+  ]
+}

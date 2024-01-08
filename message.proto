@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package sockets;
+
+message message {
+    enum OperationType {
+        ADD         = 1;
+        SUB         = 2;
+        TERMINATION = 3;
+        COUNTER     = 4;
+    }
+
+    required OperationType type = 1;
+    optional int64 argument = 2;
+}
